@@ -1,8 +1,8 @@
 const PostModel= require("../models/post.model");
 const addPost = async (title, body) => {
     const post = await PostModel.create({
-        title,
-        body,
+        title: title,
+        body: body,
     });
     return post;
 };
@@ -12,19 +12,19 @@ const getPost = async (id) => {
 };
 const updatePost = async (id, arg) => {
     //araument
-    const updatePost = await PostModel.findByIdAndDelete(id, arg, {
+    const updatePost = await PostModel.findByIdAndUpdate(id, arg, {
         new: true,
     });
     return updatePost;
 };
 
-const removePosst = async (id) => {
-    const deletion = awat PostModel.findByIdAndDelete(id);
+const removePost = async (id) => {
+    const deletion = await PostModel.findByIdAndDelete(id);
     return deletion;
 };
 module.exports = {
     addPost,
     getPost,
     updatePost,
-    removePosst,
-}; 
+    removePost,
+};
