@@ -1,16 +1,27 @@
 const express= require("express");
-const path = require("path");
+// const path = require("path");
 
 const ejs = require("ejs") //quan trọng
 
 const mongoose = require('mongoose')
+
+
+
 const bodyParser = require("body-parser")
 const {
     addPost,
+    listPosts,
     getPost,
     updatePost,
     removePost,
 } = require ("./src/routes/post.rout");
+
+const { v4: uuidv4 } = require('uuid');
+
+const fileUpload = require("express-fileupload");
+
+const path = require("path");
+
 const { create } = require("./src/models/post.model");
 
 
@@ -38,8 +49,23 @@ app.use(bodyParser.urlencoded({extended: true}));
 //đăng kí thư mục public
 app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-    res.render("index")
+//user fileupload
+app.use(fileUpload())
+
+app.get("/posts", async (req, res) => {
+    const posts = await listPosts();
+    res.status(200).json({
+        status: "success",
+        data: posts,
+    })
+})
+
+app.get("/", async (req, res) => {
+    const posts = await listPosts();
+    res.render("index", {
+        posts: posts,
+    });
+    
 });
 app.get("/about", (req, res) => {
     res.render("about")
@@ -47,8 +73,12 @@ app.get("/about", (req, res) => {
 app.get("/contact", (req, res) => {
     res.render("contact")
 });
-app.get("/post", (req, res) => {
-    res.render("post")
+app.get("/post/:id", async (req, res) => {
+    const postId = req.params.id;
+    const post = await getPost(postId);
+    res.render("post", {
+       post: post,
+    });
 });
 
 //GET, POST, PUT/PATCH, DELETE (CRUD)
@@ -61,12 +91,20 @@ app.post("/posts/store", async (req, res) => {
  const { title, body } = req.body; //for short
 
     try {
-        const newPost = await addPost(title, body);
-
-        res.status(200).json({
-            status: "success",
-            data: newPost,
+        const image = req.files.image;
+        const imageName = `${uuidv4()}-${image.name}`
+        image.mv(path.resolve(__dirname,"public/upload",imageName),(erro) => {
+           console.log("OK")
         });
+
+        const newPost = await addPost(title, body, imageName);
+        res.redirect(`/post/${newPost.id}`);
+
+        // res.status(200).json({
+        //     status: "success",
+        //     data: newPost,
+        // });
+
     } catch (error) {
         res.status(400).json({
             status: "error",
